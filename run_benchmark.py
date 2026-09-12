@@ -124,7 +124,7 @@ def run_phase(phase_num: int, extra_args: list, bench_root: str, dry_run: bool =
         return False
 
 
-def check_prerequisites(bench_root: str) -> list:
+def check_prerequisites(bench_root: str, require_slurm: bool = True) -> list:
     """Check that required directories and files exist.
 
     Returns list of missing items (empty if all OK).
@@ -157,10 +157,11 @@ def check_prerequisites(bench_root: str) -> list:
     if not os.path.isdir(targets_dir):
         missing.append(f"{targets_dir} (target data)")
 
-    # Check Slurm
-    result = subprocess.run('which sbatch', shell=True, capture_output=True)
-    if result.returncode != 0:
-        missing.append("sbatch (Slurm not found in PATH)")
+    # Check Slurm — only required if actually using the slurm executor
+    if require_slurm:
+        result = subprocess.run('which sbatch', shell=True, capture_output=True)
+        if result.returncode != 0:
+            missing.append("sbatch (Slurm not found in PATH)")
 
     # Check conda
     result = subprocess.run('which conda', shell=True, capture_output=True)
@@ -226,8 +227,15 @@ def main():
                         help='Number of molecules per target (default: 100)')
     parser.add_argument('--batch-size', type=int, default=32,
                         help='Batch size for generation (default: 32)')
+    parser.add_argument('--executor', type=str, choices=['local', 'slurm'], default='local',
+                        help="Phase 3 executor: 'local' runs jobs one at a time on this machine "
+                             "(default — for single-GPU rented VMs with no real scheduler); "
+                             "'slurm' submits via sbatch (needs genuine multi-GPU concurrency)")
+    parser.add_argument('--conda-init', type=str, default=None,
+                        help='Path to conda.sh, passed to phase 3 (--executor local). '
+                             'Default: $CONDA_INIT or ~/miniconda3/etc/profile.d/conda.sh')
     parser.add_argument('--max-concurrent', type=int, default=4,
-                        help='Max concurrent Slurm jobs (default: 4)')
+                        help='Max concurrent Slurm jobs (--executor slurm only, default: 4)')
     parser.add_argument('--skip-docking', action='store_true',
                         help='Skip Vina docking in evaluation phase')
     parser.add_argument('--smoke-test', action='store_true',
@@ -247,7 +255,9 @@ def main():
     logger.info("=" * 70)
     logger.info(f"Bench root: {args.bench_root}")
     logger.info(f"Num samples: {args.num_samples}")
-    logger.info(f"Max concurrent: {args.max_concurrent}")
+    logger.info(f"Executor: {args.executor}")
+    if args.executor == 'slurm':
+        logger.info(f"Max concurrent: {args.max_concurrent}")
     if args.tools:
         logger.info(f"Tools: {args.tools}")
     if args.targets:
@@ -257,7 +267,7 @@ def main():
 
     # Prerequisite checks
     if not args.skip_checks and not args.dry_run:
-        missing = check_prerequisites(args.bench_root)
+        missing = check_prerequisites(args.bench_root, require_slurm=(args.executor == 'slurm'))
         if missing:
             logger.error("Missing prerequisites:")
             for m in missing:
@@ -292,8 +302,12 @@ def main():
             phase_args.extend([
                 '--num-samples', str(args.num_samples),
                 '--batch-size', str(args.batch_size),
-                '--max-concurrent', str(args.max_concurrent),
+                '--executor', args.executor,
             ])
+            if args.executor == 'slurm':
+                phase_args.extend(['--max-concurrent', str(args.max_concurrent)])
+            if args.conda_init:
+                phase_args.extend(['--conda-init', args.conda_init])
             if args.smoke_test:
                 phase_args.append('--smoke-test')
         elif phase_num == 5:  # Evaluate
