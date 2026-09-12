@@ -1,0 +1,544 @@
+{
+  "_comment": "Configuration for all 36 target-conditioned de novo molecule generation tools. Each entry defines conda env, weights, inference command, GPU/memory requirements, and I/O formats.",
+
+  "AutoGrow4": {
+    "category": "classical",
+    "repo_path": "bench_repos/AutoGrow4",
+    "conda_env": "autogrow4",
+    "conda_spec": {"python": "3.8", "pip": ["rdkit", "openbabel", "numpy", "scipy"]},
+    "gpu_memory_gb": 0,
+    "gpu_required": false,
+    "weights": {"url": null, "path": null},
+    "input_format": "protein_pdb_pdbqt",
+    "inference_cmd": "python run_autogrow.py -j {config_path}",
+    "output_format": "smi_ranked",
+    "output_path": "{output_dir}/Run_0/generation_*/generation_*_ranked.smi",
+    "timeout_hours": 2,
+    "extra_setup": ["sed -i 's/ligand_filename = os.path.basename(a)/ligand_filename = a/' /opt/ADFRsuite/CCSBpckgs/AutoDockTools/Utilities24/prepare_ligand4.py || true"]
+  },
+
+  "TargetDiff": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/TargetDiff",
+    "conda_env": "targetdiff",
+    "conda_spec": {"python": "3.8", "pytorch": "1.13.1", "cuda": "11.6", "pip": ["torch-geometric", "rdkit", "openbabel", "tensorboard", "pyyaml", "easydict", "python-lmdb", "biopython"]},
+    "gpu_memory_gb": 8,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/file/d/1f7oQ-0yAlf8w0H7y3Yz6zZ5zZ5zZ5zZ5/view", "path": "pretrained_models/pretrained_diffusion.pt", "method": "gdown"},
+    "input_format": "protein_pdb",
+    "inference_cmd": "python scripts/sample_for_pocket.py configs/sampling.yml --pdb_path {pdb_path} --num_samples {num_samples} --batch_size 32 --result_path {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 3
+  },
+
+  "DecompDiff": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/DecompDiff",
+    "conda_env": "decompdiff",
+    "conda_spec": {"python": "3.8", "pytorch": "1.13.1", "cuda": "11.6", "pip": ["torch-geometric", "rdkit", "openbabel", "pyyaml", "easydict", "python-lmdb", "biopython"]},
+    "gpu_memory_gb": 8,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1decompdiff", "path": "pretrained_models/", "method": "gdown"},
+    "input_format": "protein_pdb",
+    "inference_cmd": "python scripts/sample_for_pocket.py configs/sampling_drift.yml --pdb_path {pdb_path} --num_samples {num_samples} --batch_size 32 --result_path {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 3
+  },
+
+  "DiffSBDD": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/DiffSBDD",
+    "conda_env": "diffsbdd",
+    "conda_spec": {"python": "3.8", "pytorch": "1.12.1", "cuda": "11.3", "pip": ["torch-geometric", "rdkit", "openbabel", "pytorch-lightning", "pyyaml", "wandb"]},
+    "gpu_memory_gb": 8,
+    "gpu_required": true,
+    "weights": {"url": "https://github.com/arnesto-garashchenko/DiffSBDD/releases/download/v1.0/crossdock_ca_cond.ckpt", "path": "checkpoints/crossdock_ca_cond.ckpt", "method": "wget"},
+    "input_format": "protein_pdb",
+    "inference_cmd": "python generate_ligands.py {checkpoint} --pdbfile {pdb_path} --n_samples {num_samples} --batch_size 32 --outfile {output_dir}/molecules.sdf --sanitize",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/molecules.sdf",
+    "timeout_hours": 3
+  },
+
+  "Pocket2Mol": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/Pocket2Mol",
+    "conda_env": "pocket2mol",
+    "conda_spec": {"python": "3.8", "pytorch": "1.10.1", "cuda": "11.3", "pip": ["torch-geometric==2.0.0", "rdkit", "biopython"]},
+    "gpu_memory_gb": 8,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1pocket2mol", "path": "checkpoints/pocket2mol.pt", "method": "gdown"},
+    "input_format": "protein_pdb",
+    "inference_cmd": "python sample_for_pdb.py --config configs/sample_for_pdb.yml --pdb_path {pdb_path} --num_samples {num_samples} --batch_size 32 --result_path {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 2
+  },
+
+  "GraphBP": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/GraphBP",
+    "conda_env": "graphbp",
+    "conda_spec": {"python": "3.8", "pytorch": "1.10.0", "cuda": "11.3", "pip": ["torch-geometric", "rdkit", "biopython", "pyyaml"]},
+    "gpu_memory_gb": 6,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1graphbp", "path": "checkpoints/", "method": "gdown"},
+    "input_format": "protein_pdb",
+    "inference_cmd": "python GraphBP/main_eval.py --config {config_path} --pdb_path {pdb_path} --num_samples {num_samples} --output_dir {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 2
+  },
+
+  "3D-SBDD": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/3D-SBDD",
+    "conda_env": "sbdd3d",
+    "conda_spec": {"python": "3.8", "pytorch": "1.10.0", "cuda": "11.3", "pip": ["torch-geometric", "rdkit", "biopython", "pyyaml"]},
+    "gpu_memory_gb": 6,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1sbdd3d", "path": "checkpoints/", "method": "gdown"},
+    "input_format": "protein_pdb",
+    "inference_cmd": "python models/sample.py --config configs/sample.yml --pdb_path {pdb_path} --num_samples {num_samples} --result_path {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 2
+  },
+
+  "MolCRAFT": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/MolCRAFT",
+    "conda_env": "molcraft",
+    "conda_spec": {"python": "3.9", "pytorch": "2.1.0", "cuda": "12.1", "pip": ["torch-geometric", "rdkit", "openbabel", "pytorch-lightning", "pyyaml", "posecheck"]},
+    "gpu_memory_gb": 12,
+    "gpu_required": true,
+    "weights": {"url": "https://huggingface.co/GenSI/MolCRAFT", "path": "pretrained_models/", "method": "huggingface"},
+    "input_format": "protein_pdb_sdf",
+    "inference_cmd": "python MolCRAFT/sample_for_pocket.py --config {config_path} --protein_path {pdb_path} --ligand_path {ref_sdf} --num_samples {num_samples} --out_dir {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 3
+  },
+
+  "MolPilot": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/MolPilot",
+    "conda_env": "molpilot",
+    "conda_spec": {"python": "3.9", "pytorch": "2.1.0", "cuda": "12.1", "pip": ["torch-geometric", "rdkit", "openbabel", "pytorch-lightning", "pyyaml"]},
+    "gpu_memory_gb": 12,
+    "gpu_required": true,
+    "weights": {"url": "https://huggingface.co/GenSI/MolPilot", "path": "pretrained_models/", "method": "huggingface"},
+    "input_format": "protein_pdb_sdf",
+    "inference_cmd": "python MolPilot/sample_for_pocket.py --config {config_path} --protein_path {pdb_path} --ligand_path {ref_sdf} --num_samples {num_samples} --out_dir {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 3
+  },
+
+  "IPDiff": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/IPDiff",
+    "conda_env": "ipdiff",
+    "conda_spec": {"python": "3.8", "pytorch": "1.13.1", "cuda": "11.6", "pip": ["torch-geometric", "rdkit", "openbabel", "pyyaml", "easydict"]},
+    "gpu_memory_gb": 8,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1ipdiff", "path": "pretrained_models/", "method": "gdown"},
+    "input_format": "protein_pdb",
+    "inference_cmd": "python sample_split.py --config configs/sampling.yml --pdb_path {pdb_path} --num_samples {num_samples} --result_path {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 3
+  },
+
+  "IRDiff": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/IRDiff",
+    "conda_env": "irdiff",
+    "conda_spec": {"python": "3.8", "pytorch": "1.13.1", "cuda": "11.6", "pip": ["torch-geometric", "rdkit", "openbabel", "pyyaml", "easydict"]},
+    "gpu_memory_gb": 8,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1irdiff", "path": "pretrained_models/", "method": "gdown"},
+    "input_format": "protein_pdb",
+    "inference_cmd": "python sample_split.py --config configs/sampling.yml --pdb_path {pdb_path} --num_samples {num_samples} --result_path {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 3
+  },
+
+  "DrugFlow": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/DrugFlow",
+    "conda_env": "drugflow",
+    "conda_spec": {"python": "3.9", "pytorch": "2.0.1", "cuda": "11.8", "pip": ["torch-geometric", "rdkit", "openbabel", "pyyaml", "e3nn"]},
+    "gpu_memory_gb": 10,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1drugflow", "path": "pretrained_models/", "method": "gdown"},
+    "input_format": "protein_pdb",
+    "inference_cmd": "python src/generate.py --config {config_path} --pdb_path {pdb_path} --num_samples {num_samples} --out_dir {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 3
+  },
+
+  "DualDiff": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/DualDiff",
+    "conda_env": "dualdiff",
+    "conda_spec": {"python": "3.8", "pytorch": "1.13.1", "cuda": "11.6", "pip": ["torch-geometric", "rdkit", "openbabel", "pyyaml", "easydict"]},
+    "gpu_memory_gb": 8,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1dualdiff", "path": "pretrained_models/", "method": "gdown"},
+    "input_format": "protein_pdb",
+    "inference_cmd": "python scripts/sample_for_pocket.py --config configs/sampling.yml --pdb_path {pdb_path} --num_samples {num_samples} --result_path {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 3
+  },
+
+  "LiGAN": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/LiGAN",
+    "conda_env": "ligan",
+    "conda_spec": {"python": "3.7", "pytorch": "1.10.0", "cuda": "11.3", "pip": ["rdkit", "openbabel", "pyyaml", "scipy"]},
+    "gpu_memory_gb": 10,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1ligan", "path": "checkpoints/", "method": "gdown"},
+    "input_format": "protein_pdb_grid",
+    "inference_cmd": "python generate.py --config {config_path} --pdb_path {pdb_path} --num_samples {num_samples} --out_dir {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 4
+  },
+
+  "DrugHIVE": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/DrugHIVE",
+    "conda_env": "drughive",
+    "conda_spec": {"python": "3.9", "pytorch": "2.0.1", "cuda": "11.8", "pip": ["rdkit", "openbabel", "pyyaml", "biopython", "torch-geometric"]},
+    "gpu_memory_gb": 16,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1drughive", "path": "checkpoints/", "method": "gdown"},
+    "input_format": "protein_pdb",
+    "inference_cmd": "python generate_molecules.py --config config/generate.yml --pdb_path {pdb_path} --num_samples {num_samples} --out_dir {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 4
+  },
+
+  "Lingo3DMol": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/Lingo3DMol",
+    "conda_env": "lingo3dmol",
+    "conda_spec": {"python": "3.8", "pytorch": "1.12.1", "cuda": "11.3", "pip": ["rdkit", "openbabel", "pyyaml", "biopython", "transformers"]},
+    "gpu_memory_gb": 10,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1lingo3dmol", "path": "checkpoints/", "method": "gdown"},
+    "input_format": "protein_pdb",
+    "inference_cmd": "python inference/inference.py --config {config_path} --pdb_path {pdb_path} --num_samples {num_samples} --out_dir {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 3
+  },
+
+  "TamGent": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/TamGent",
+    "conda_env": "tamgent",
+    "conda_spec": {"python": "3.8", "pytorch": "1.10.0", "cuda": "11.3", "pip": ["fairseq", "rdkit", "biopython"]},
+    "gpu_memory_gb": 8,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1tamgent", "path": "checkpoints/", "method": "gdown"},
+    "input_format": "protein_pdb",
+    "inference_cmd": "python eval_lm.py --pdb_path {pdb_path} --num_samples {num_samples} --out_dir {output_dir}",
+    "output_format": "smi",
+    "output_path": "{output_dir}/*.smi",
+    "timeout_hours": 2
+  },
+
+  "PAFlow": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/PAFlow",
+    "conda_env": "paflow",
+    "conda_spec": {"python": "3.8", "pytorch": "1.13.1", "cuda": "11.6", "pip": ["torch-geometric", "rdkit", "openbabel", "pyyaml", "easydict"]},
+    "gpu_memory_gb": 8,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1paflow", "path": "pretrained_models/", "method": "gdown"},
+    "input_format": "protein_pdb",
+    "inference_cmd": "python scripts/sample_for_pocket.py --config configs/sampling_guide.yml --pdb_path {pdb_path} --num_samples {num_samples} --result_path {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 3
+  },
+
+  "SILVR": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/SILVR",
+    "conda_env": "silvr",
+    "conda_spec": {"python": "3.9", "pytorch": "2.0.1", "cuda": "11.8", "pip": ["torch-geometric", "rdkit", "openbabel", "pytorch-lightning", "pyyaml"]},
+    "gpu_memory_gb": 10,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1silvr", "path": "checkpoints/", "method": "gdown"},
+    "input_format": "protein_pdb",
+    "inference_cmd": "python generate.py --config {config_path} --pdb_path {pdb_path} --num_samples {num_samples} --out_dir {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 3
+  },
+
+  "MolSnapper": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/MolSnapper",
+    "conda_env": "molsnapper",
+    "conda_spec": {"python": "3.9", "pytorch": "2.0.1", "cuda": "11.8", "pip": ["torch-geometric", "rdkit", "openbabel", "pyyaml", "biopython"]},
+    "gpu_memory_gb": 10,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1molsnapper", "path": "checkpoints/", "method": "gdown"},
+    "input_format": "protein_pdb",
+    "inference_cmd": "python scripts/generate.py --config {config_path} --pdb_path {pdb_path} --num_samples {num_samples} --out_dir {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 3
+  },
+
+  "DESERT": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/DESERT",
+    "conda_env": "desert",
+    "conda_spec": {"python": "3.8", "pytorch": "1.10.0", "cuda": "11.3", "pip": ["rdkit", "openbabel", "pyyaml", "biopython"]},
+    "gpu_memory_gb": 6,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1desert", "path": "checkpoints/", "method": "gdown"},
+    "input_format": "protein_pdb",
+    "inference_cmd": "python generate.py --config configs/generating.yaml --pdb_path {pdb_path} --num_samples {num_samples} --out_dir {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 2
+  },
+
+  "PocketFlow": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/PocketFlow",
+    "conda_env": "pocketflow",
+    "conda_spec": {"python": "3.8", "pytorch": "1.10.0", "cuda": "11.3", "pip": ["torch-geometric", "rdkit", "openbabel", "pyyaml"]},
+    "gpu_memory_gb": 8,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1pocketflow", "path": "checkpoints/", "method": "gdown"},
+    "input_format": "protein_pdb",
+    "inference_cmd": "python main_generate.py --config {config_path} --pdb_path {pdb_path} --num_samples {num_samples} --out_dir {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 3
+  },
+
+  "3DSMILES-GPT": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/3DSMILES-GPT",
+    "conda_env": "smiles3dgpt",
+    "conda_spec": {"python": "3.9", "pytorch": "2.0.1", "cuda": "11.8", "pip": ["rdkit", "openbabel", "pyyaml", "biopython", "transformers"]},
+    "gpu_memory_gb": 10,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1smiles3dgpt", "path": "checkpoints/", "method": "gdown"},
+    "input_format": "protein_pdb",
+    "inference_cmd": "python sample_from_ligand_msms.py --config configs/base.yml --pdb_path {pdb_path} --num_samples {num_samples} --out_dir {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 3
+  },
+
+  "3DMolFormer": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/3DMolFormer",
+    "conda_env": "mol3dformer",
+    "conda_spec": {"python": "3.9", "pytorch": "2.0.1", "cuda": "11.8", "pip": ["rdkit", "openbabel", "transformers", "pyyaml"]},
+    "gpu_memory_gb": 12,
+    "gpu_required": true,
+    "weights": {"url": "https://huggingface.co/3DMolFormer", "path": "checkpoints/", "method": "huggingface"},
+    "input_format": "protein_pdb",
+    "inference_cmd": "python generation_finetuning.py --pdb_path {pdb_path} --num_samples {num_samples} --out_dir {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 3
+  },
+
+  "PocketXMol": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/PocketXMol",
+    "conda_env": "pocketxmol",
+    "conda_spec": {"python": "3.9", "pytorch": "2.0.1", "cuda": "11.8", "pip": ["torch-geometric", "rdkit", "openbabel", "pyyaml", "biopython", "transformers"]},
+    "gpu_memory_gb": 16,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1pocketxmol", "path": "checkpoints/", "method": "gdown"},
+    "input_format": "protein_pdb",
+    "inference_cmd": "python evaluate/generate.py --config {config_path} --pdb_path {pdb_path} --num_samples {num_samples} --out_dir {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 4
+  },
+
+  "DeepBlock": {
+    "category": "pocket3d",
+    "repo_path": "bench_repos/DeepBlock",
+    "conda_env": "deepblock",
+    "conda_spec": {"python": "3.9", "pytorch": "2.0.1", "cuda": "11.8", "pip": ["rdkit", "openbabel", "pyyaml", "biopython"]},
+    "gpu_memory_gb": 12,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1deepblock", "path": "checkpoints/", "method": "gdown"},
+    "input_format": "protein_pdb",
+    "inference_cmd": "python generate.py --config {config_path} --pdb_path {pdb_path} --num_samples {num_samples} --out_dir {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 4
+  },
+
+  "DrugGPT": {
+    "category": "sequence",
+    "repo_path": "bench_repos/DrugGPT",
+    "conda_env": "druggpt",
+    "conda_spec": {"python": "3.9", "pytorch": "2.0.1", "cuda": "11.8", "pip": ["transformers", "rdkit", "biopython"]},
+    "gpu_memory_gb": 4,
+    "gpu_required": true,
+    "weights": {"url": "https://huggingface.co/liyuesen/druggpt", "path": null, "method": "huggingface"},
+    "input_format": "protein_fasta",
+    "inference_cmd": "python druggpt/drug_generator.py --protein_fasta {fasta_path} --num_molecules {num_samples} --batch_size 20 --max_length 512 --device cuda --output {output_dir}/molecules.smi",
+    "output_format": "smi",
+    "output_path": "{output_dir}/molecules.smi",
+    "timeout_hours": 2
+  },
+
+  "DrugGen": {
+    "category": "sequence",
+    "repo_path": "bench_repos/DrugGen",
+    "conda_env": "druggen",
+    "conda_spec": {"python": "3.9", "pytorch": "2.0.1", "cuda": "11.8", "pip": ["transformers", "rdkit", "datasets", "biopython"]},
+    "gpu_memory_gb": 4,
+    "gpu_required": true,
+    "weights": {"url": "https://huggingface.co/alimotahharynia/DrugGen", "path": null, "method": "huggingface"},
+    "input_format": "protein_fasta",
+    "inference_cmd": "python drugGen_generator_cli.py --protein_fasta {fasta_path} --num_molecules {num_samples} --batch_size 20 --device cuda --output {output_dir}/molecules.smi",
+    "output_format": "smi",
+    "output_path": "{output_dir}/molecules.smi",
+    "timeout_hours": 2
+  },
+
+  "AlphaDrug": {
+    "category": "sequence",
+    "repo_path": "bench_repos/AlphaDrug",
+    "conda_env": "alphadrug",
+    "conda_spec": {"python": "3.7", "pytorch": "1.10.0", "cuda": "11.3", "pip": ["rdkit", "biopython", "numpy"]},
+    "gpu_memory_gb": 8,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1myoeLdsOYz8mSvYEhSdMfUszUJlaJR3u", "path": "checkpoints/", "method": "gdown"},
+    "input_format": "protein_fasta",
+    "inference_cmd": "python generate.py --protein_fasta {fasta_path} --num_samples {num_samples} --device cuda --out_dir {output_dir}",
+    "output_format": "smi",
+    "output_path": "{output_dir}/*.smi",
+    "timeout_hours": 4
+  },
+
+  "ProtoBind-Diff": {
+    "category": "sequence",
+    "repo_path": "bench_repos/ProtoBind-Diff",
+    "conda_env": "protobind",
+    "conda_spec": {"python": "3.9", "pytorch": "2.0.1", "cuda": "11.8", "pip": ["torch-geometric", "rdkit", "openbabel", "pyyaml", "transformers", "fair-esm"]},
+    "gpu_memory_gb": 10,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1protobind", "path": "checkpoints/", "method": "gdown"},
+    "input_format": "protein_fasta",
+    "inference_cmd": "python protobind_diff/esm_inference.py --config configs/masked_diffusion.yaml --protein_fasta {fasta_path} --num_samples {num_samples} --out_dir {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 3
+  },
+
+  "TargetVAE": {
+    "category": "sequence",
+    "repo_path": "bench_repos/TargetVAE",
+    "conda_env": "targetvae",
+    "conda_spec": {"python": "3.8", "pytorch": "1.12.1", "cuda": "11.3", "pip": ["rdkit", "openbabel", "pyyaml", "biopython"]},
+    "gpu_memory_gb": 6,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1targetvae", "path": "checkpoints/", "method": "gdown"},
+    "input_format": "protein_fasta",
+    "inference_cmd": "python generate_with_specific_target.py --protein_fasta {fasta_path} --num_samples {num_samples} --device cuda --out_dir {output_dir}",
+    "output_format": "smi",
+    "output_path": "{output_dir}/*.smi",
+    "timeout_hours": 2
+  },
+
+  "DrugGEN": {
+    "category": "interaction",
+    "repo_path": "bench_repos/DrugGEN",
+    "conda_env": "druggen_gan",
+    "conda_spec": {"python": "3.9", "pytorch": "2.0.1", "cuda": "11.8", "pip": ["rdkit", "pyyaml", "numpy", "scipy", "torch-geometric"]},
+    "gpu_memory_gb": 8,
+    "gpu_required": true,
+    "weights": {"url": "https://huggingface.co/HUBioDataLab/DrugGEN", "path": "checkpoints/", "method": "huggingface"},
+    "input_format": "protein_target_id",
+    "inference_cmd": "python inference.py --target {target_name} --num_samples {num_samples} --device cuda --out_dir {output_dir}",
+    "output_format": "smi",
+    "output_path": "{output_dir}/*.smi",
+    "timeout_hours": 2
+  },
+
+  "DeepICL": {
+    "category": "interaction",
+    "repo_path": "bench_repos/DeepICL",
+    "conda_env": "deepicl",
+    "conda_spec": {"python": "3.8", "pytorch": "1.12.1", "cuda": "11.3", "pip": ["torch-geometric", "rdkit", "openbabel", "pyyaml", "biopython"]},
+    "gpu_memory_gb": 10,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/file/d/10uxhu7vUuEkefOe7yb2FeE-6Ekdfp8qR", "path": "checkpoints/", "method": "gdown"},
+    "input_format": "protein_pdb_interaction",
+    "inference_cmd": "python script/generate.py --config {config_path} --pdb_path {pdb_path} --ref_ligand {ref_sdf} --num_samples {num_samples} --out_dir {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 3
+  },
+
+  "Assay2Mol": {
+    "category": "interaction",
+    "repo_path": "bench_repos/Assay2Mol",
+    "conda_env": "assay2mol",
+    "conda_spec": {"python": "3.9", "pytorch": "2.0.1", "cuda": "11.8", "pip": ["rdkit", "openbabel", "pyyaml", "biopython", "transformers"]},
+    "gpu_memory_gb": 10,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1assay2mol", "path": "checkpoints/", "method": "gdown"},
+    "input_format": "protein_pdb_assay",
+    "inference_cmd": "python generate.py --pdb_path {pdb_path} --ref_ligand {ref_sdf} --num_samples {num_samples} --device cuda --out_dir {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 3
+  },
+
+  "TransPharmer": {
+    "category": "pharmacophore",
+    "repo_path": "bench_repos/TransPharmer",
+    "conda_env": "transpharmer",
+    "conda_spec": {"python": "3.8", "pytorch": "1.10.0", "cuda": "11.3", "pip": ["rdkit", "openbabel", "pyyaml", "biopython"]},
+    "gpu_memory_gb": 6,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1transpharmer", "path": "checkpoints/", "method": "gdown"},
+    "input_format": "pharmacophore_pdb",
+    "inference_cmd": "python generate.py --config configs/benchmark.yaml --pdb_path {pdb_path} --pharmacophore {pharm_path} --num_samples {num_samples} --out_dir {output_dir}",
+    "output_format": "smi",
+    "output_path": "{output_dir}/*.smi",
+    "timeout_hours": 2
+  },
+
+  "SQUID": {
+    "category": "pharmacophore",
+    "repo_path": "bench_repos/SQUID",
+    "conda_env": "squid",
+    "conda_spec": {"python": "3.9", "pytorch": "2.0.1", "cuda": "11.8", "pip": ["torch-geometric", "rdkit", "openbabel", "pyyaml", "biopython"]},
+    "gpu_memory_gb": 8,
+    "gpu_required": true,
+    "weights": {"url": "https://drive.google.com/drive/folders/1squid", "path": "checkpoints/", "method": "gdown"},
+    "input_format": "protein_pdb_shape",
+    "inference_cmd": "python generate.py --pdb_path {pdb_path} --ref_ligand {ref_sdf} --num_samples {num_samples} --device cuda --out_dir {output_dir}",
+    "output_format": "sdf",
+    "output_path": "{output_dir}/*.sdf",
+    "timeout_hours": 3
+  }
+}

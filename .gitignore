@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Cloned third-party tool repos (36 of them, not yours to version)
+bench_repos/
+
+# Target/input data (PDB, sequences, reference ligands) — can be large;
+# keep these out of git and store/share separately if needed
+targets/pdb/
+targets/pdbqt/
+targets/sequences/
+targets/reference_ligands/
+
+# Pipeline-generated artifacts (regenerated every run)
+prepared_inputs/
+slurm_jobs/
+checkpoints/
+logs/
+results/
+collected_results/
+evaluations/
+benchmark_status.json
+benchmark_pipeline.log
+report_benchmark.md
+benchmark_summary.csv
+benchmark_comparison.png
+benchmark_comparison.svg
+benchmark_radar.png
+benchmark_radar.svg
+benchmark_heatmap.png
+benchmark_heatmap.svg
+benchmark_boxplots.png
+benchmark_boxplots.svg
+
+# Conda envs / weights live outside the repo on the cluster
+*.pt
+*.pth
+*.ckpt
+
+# OS
+.DS_Store
+Thumbs.db
